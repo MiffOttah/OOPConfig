@@ -42,6 +42,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Configuration.cs" />
+    <Compile Include="Exceptions.cs" />
     <Compile Include="TestProgram.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TextEncoder.cs" />

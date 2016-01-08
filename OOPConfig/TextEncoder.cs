@@ -22,7 +22,7 @@ namespace MiffTheFox.OOPConfig
                 if (c == ' ')
                 {
                     // encode only leading and trailing spaces
-                    if (i > 0 && i < s.Length)
+                    if (i > 0 && i < s.Length - 1)
                     {
                         writer.Write(' ');
                     }
@@ -33,15 +33,17 @@ namespace MiffTheFox.OOPConfig
                 }
                 else if (c < ',') // takes care of % and other special chars, including control chars and newlines
                 {
-                    writer.Write("%{0:x2}", (int)c);
+                    writer.Write('%');
+                    writer.Write(((int)c).ToString("x2", CultureInfo.InvariantCulture));
                 }
-                else if (c == '=') // equals is special
+                else if (c == '=' || c == '[' || c == ']' || c == ';') // more special chars
                 {
                     writer.Write("%3d");
                 }
                 else if (char.IsControl(c) || char.IsSeparator(c) || char.IsSurrogate(c) || char.IsWhiteSpace(c)) // encode other misc special characters
                 {
-                    writer.Write("%u{0:x4}", (int)c);
+                    writer.Write("%u");
+                    writer.Write(((int)c).ToString("x4", CultureInfo.InvariantCulture));
                 }
                 else // everything else can be written as-is
                 {
@@ -54,8 +56,43 @@ namespace MiffTheFox.OOPConfig
 
         public static string Decode(string s)
         {
-            // TODO: Decode encoded string
-            throw new NotImplementedException();
+            var rv = new StringBuilder();
+
+            int originalLength = s.Length;
+            s += "????"; // cheap and dirty way to prevent buffer overrun when parsing %
+
+            for (int i = 0; i < originalLength; i++)
+            {
+                if (s[i] == '%')
+                {
+                    if (s[i + 1] == 'u')
+                    {
+                        string codepoint = s.Substring(i + 2, 4);
+                        int n;
+                        if (int.TryParse(codepoint, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out n))
+                        {
+                            rv.Append((char)n);
+                        }
+                        i += 5;
+                    }
+                    else
+                    {
+                        string codepoint = s.Substring(i + 1, 2);
+                        int n;
+                        if (int.TryParse(codepoint, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out n))
+                        {
+                            rv.Append((char)n);
+                        }
+                        i += 2;
+                    }
+                }
+                else
+                {
+                    rv.Append(s[i]);
+                }
+            }
+
+            return rv.ToString();
         }
 
         public static string ObjToString(object o)
@@ -92,6 +129,69 @@ namespace MiffTheFox.OOPConfig
             else
             {
                 return o.ToString();
+            }
+        }
+
+        public static object StringToObj(string str, Type destinationType)
+        {
+            if (destinationType == typeof(string))
+            {
+                return str;
+            }
+            else if (destinationType == typeof(bool))
+            {
+                return str.ToLowerInvariant() == "true";
+            }
+
+            // there's probably a better way to do this
+            else if (destinationType == typeof(int))
+            {
+                return int.Parse(str, CultureInfo.InvariantCulture);
+            }
+            else if (destinationType == typeof(uint))
+            {
+                return uint.Parse(str, CultureInfo.InvariantCulture);
+            }
+            else if (destinationType == typeof(long))
+            {
+                return long.Parse(str, CultureInfo.InvariantCulture);
+            }
+            else if (destinationType == typeof(ulong))
+            {
+                return ulong.Parse(str, CultureInfo.InvariantCulture);
+            }
+            else if (destinationType == typeof(short))
+            {
+                return short.Parse(str, CultureInfo.InvariantCulture);
+            }
+            else if (destinationType == typeof(ushort))
+            {
+                return ushort.Parse(str, CultureInfo.InvariantCulture);
+            }
+            else if (destinationType == typeof(byte))
+            {
+                return byte.Parse(str, CultureInfo.InvariantCulture);
+            }
+            else if (destinationType == typeof(sbyte))
+            {
+                return sbyte.Parse(str, CultureInfo.InvariantCulture);
+            }
+            else if (destinationType == typeof(float))
+            {
+                return float.Parse(str, CultureInfo.InvariantCulture);
+            }
+            else if (destinationType == typeof(double))
+            {
+                return double.Parse(str, CultureInfo.InvariantCulture);
+            }
+            else if (destinationType == typeof(decimal))
+            {
+                return decimal.Parse(str, CultureInfo.InvariantCulture);
+            }
+
+            else
+            {
+                throw new NotImplementedException();
             }
         }
     }

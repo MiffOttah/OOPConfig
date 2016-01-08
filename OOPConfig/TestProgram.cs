@@ -14,16 +14,21 @@ namespace MiffTheFox.OOPConfig
         {
             string testFile = Path.Combine(Path.GetTempPath(), "OOPConfig.txt");
          
-            var conf = new MyConfig();
-            conf.SomeBool = true;
-            conf.SomeString = "Hello, world! Lorem ipsum!";
-            conf.SomeInt = 117;
-            conf.SomeDouble = 3.14;
-            conf.SomeObject = new MySerObject { Message = "Hello, world!" };
+            var config1 = new MyConfig();
+            config1.SomeBool = true;
+            config1.SomeString = "  Hello, wörld! 🐧 Lorem ipsum!  ";
+            config1.SomeInt = 117;
+            config1.SomeDouble = 3.14;
+            //config1.SomeObject = new MySerObject { Message = "Hello, world!" };
 
-            conf.Save(testFile);
+            config1.Save(testFile);
 
-            var config = (MyConfig)Configuration.Load(testFile);
+            var config2 = Configuration.Load<MyConfig>(testFile);
+            Debug.Assert(config2.SomeBool == config1.SomeBool);
+            Debug.Assert(config2.SomeString == config1.SomeString);
+            Debug.Assert(config2.SomeInt == config1.SomeInt);
+            Debug.Assert(config2.SomeDouble == config1.SomeDouble);
+            //Debug.Assert(config2.SomeObject.Message == config1.SomeObject.Message);
         }
 
         class MyConfig : Configuration
@@ -32,7 +37,7 @@ namespace MiffTheFox.OOPConfig
             public bool SomeBool { get; set; }
             public int SomeInt { get; set; }
             public double SomeDouble { get; set; }
-            public MySerObject SomeObject { get; set; }
+            //public MySerObject SomeObject { get; set; }
         }
 
         [Serializable]
