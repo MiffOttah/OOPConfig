@@ -35,11 +35,25 @@ namespace MiffTheFox.OOPConfig
                     TextEncoder.Encode(property.Name, writer);
                     writer.Write('=');
 
-                    // TODO: Encode value
+                    string serialized = TextEncoder.ObjToString(property.GetValue(this));
+                    TextEncoder.Encode(serialized, writer);
 
                     writer.WriteLine();
                 }
             }
+        }
+
+        public static object Load(string filename)
+        {
+            using (var reader = new StreamReader(File.Open(filename, FileMode.Open), Encoding.UTF8))
+            {
+                return Load(reader);
+            }
+        }
+
+        private static object Load(StreamReader reader)
+        {
+            throw new NotImplementedException();
         }
     }
 }

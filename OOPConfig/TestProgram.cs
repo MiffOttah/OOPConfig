@@ -18,16 +18,27 @@ namespace MiffTheFox.OOPConfig
             conf.SomeBool = true;
             conf.SomeString = "Hello, world! Lorem ipsum!";
             conf.SomeInt = 117;
+            conf.SomeDouble = 3.14;
+            conf.SomeObject = new MySerObject { Message = "Hello, world!" };
 
             conf.Save(testFile);
-            Process.Start(testFile); // open the resultant file in an editor
+
+            var config = (MyConfig)Configuration.Load(testFile);
         }
 
         class MyConfig : Configuration
         {
             public string SomeString { get; set; }
             public bool SomeBool { get; set; }
-            public int SomeInt { get; set; }   
+            public int SomeInt { get; set; }
+            public double SomeDouble { get; set; }
+            public MySerObject SomeObject { get; set; }
+        }
+
+        [Serializable]
+        class MySerObject
+        {
+            public string Message { get; set; }
         }
     }
 }
