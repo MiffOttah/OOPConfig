@@ -189,9 +189,27 @@ namespace MiffTheFox.OOPConfig
                 return decimal.Parse(str, CultureInfo.InvariantCulture);
             }
 
+            else if (destinationType.GetCustomAttributes(false).Any(attr => attr is SerializableAttribute))
+            {
+                if (str.StartsWith("object:"))
+                {
+                    var bf = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
+                    byte[] data = Convert.FromBase64String(str.Substring(7));
+                    using (var ms = new MemoryStream(data))
+                    {
+                        return bf.Deserialize(ms);
+                    }
+                }
+                else
+                {
+                    throw new OOPConfigCannotDeseralizeException();
+                }
+            }
+
             else
             {
-                throw new NotImplementedException();
+                // ignore any types that can't be deseralized
+                return null;
             }
         }
     }

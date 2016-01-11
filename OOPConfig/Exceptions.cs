@@ -10,4 +10,8 @@ namespace MiffTheFox.OOPConfig
     {
         public OOPConfigSyntaxException() : base("Config file syntax error.") { }
     }
+    public class OOPConfigCannotDeseralizeException : Exception
+    {
+        public OOPConfigCannotDeseralizeException() : base("This doesn't look like a seralized object.") { }
+    }
 }
