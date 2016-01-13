@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace MiffTheFox.OOPConfig
 {
@@ -14,22 +11,69 @@ namespace MiffTheFox.OOPConfig
     /// </summary>
     public abstract class Configuration
     {
+        private static string _GetConfigurationSavePathForAssembly(Assembly asm, Type t)
+        {
+            string baseDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "OOPConfig");
+
+            string title = asm.GetCustomAttribute<AssemblyTitleAttribute>().Title;
+            if (string.IsNullOrEmpty(title)) title = "_";
+
+            string company = asm.GetCustomAttribute<AssemblyCompanyAttribute>().Company;
+            if (string.IsNullOrEmpty(company)) company = "_";
+
+            string guid = asm.GetCustomAttribute<GuidAttribute>().Value;
+            if (string.IsNullOrEmpty(guid)) guid = "_";
+
+            return Path.Combine(baseDirectory, TextEncoder.PrepareForFilename(company), TextEncoder.PrepareForFilename(title), TextEncoder.PrepareForFilename(guid), TextEncoder.PrepareForFilename(asm.GetName().Name) + ".oopconfig");
+        }
+
+        /// <summary>
+        /// Saves the configuration to an automatically-determined location.
+        /// </summary>
+        public void Save()
+        {
+            Save(_GetConfigurationSavePathForAssembly(Assembly.GetCallingAssembly(), this.GetType()));
+        }
+
+        /// <summary>
+        /// Saves the configuration to the path provided.
+        /// </summary>
+        /// <param name="filename"></param>
         public void Save(string filename)
         {
             this.Save(filename, this.GetType().Name);
         }
+
+        /// <summary>
+        /// Saves the configuration to the TextWriter.
+        /// </summary>
+        /// <param name="writer"></param>
         public void Save(TextWriter writer)
         {
             this.Save(writer, this.GetType().Name);
         }
 
+        /// <summary>
+        /// Saves the configuration to the path provided.
+        /// </summary>
+        /// <param name="filename"></param>
+        /// <param name="section"></param>
         public void Save(string filename, string section)
         {
+            string directory = Path.GetDirectoryName(filename);
+            if (!Directory.Exists(directory)) Directory.CreateDirectory(directory);
+
             using (var writer = new StreamWriter(File.Open(filename, FileMode.Create), Encoding.UTF8))
             {
                 this.Save(writer, section);
             }
         }
+
+        /// <summary>
+        /// Saves the configuration to the TextWriter.
+        /// </summary>
+        /// <param name="writer"></param>
+        /// <param name="section"></param>
         public void Save(TextWriter writer, string section)
         {
             writer.NewLine = "\n";
@@ -56,14 +100,52 @@ namespace MiffTheFox.OOPConfig
             }
         }
 
+
+        /// <summary>
+        /// Loads the configuration from an automatically-determined location.
+        /// </summary>
+        public static T Load<T>() where T : Configuration, new()
+        {
+            string filename = _GetConfigurationSavePathForAssembly(Assembly.GetCallingAssembly(), typeof(T));
+            if (File.Exists(filename))
+            {
+                return Load<T>(filename);
+            }
+            else
+            {
+                return new T();
+            }
+        }
+
+        /// <summary>
+        /// Loads configuration from a a file.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="filename"></param>
+        /// <returns></returns>
         public static T Load<T>(string filename) where T : Configuration, new()
         {
             return Load<T>(filename, typeof(T).Name);
         }
-        private static T Load<T>(StreamReader reader) where T : Configuration, new()
+
+        /// <summary>
+        /// Loads configuration from a TextReader.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="reader"></param>
+        /// <returns></returns>
+        private static T Load<T>(TextReader reader) where T : Configuration, new()
         {
             return Load<T>(reader, typeof(T).Name);
         }
+
+        /// <summary>
+        /// Loads the specified section of confiration from a file.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="filename"></param>
+        /// <param name="section"></param>
+        /// <returns></returns>
         public static T Load<T>(string filename, string section) where T : Configuration, new()
         {
             using (var reader = new StreamReader(File.Open(filename, FileMode.Open), Encoding.UTF8))
@@ -71,7 +153,15 @@ namespace MiffTheFox.OOPConfig
                 return Load<T>(reader, section);
             }
         }
-        private static T Load<T>(StreamReader reader, string section) where T : Configuration, new()
+
+        /// <summary>
+        /// Loads the specified section of confiration from a TextReader.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="reader"></param>
+        /// <param name="section"></param>
+        /// <returns></returns>
+        private static T Load<T>(TextReader reader, string section) where T : Configuration, new()
         {
             string line;
             bool active = false;
@@ -79,7 +169,7 @@ namespace MiffTheFox.OOPConfig
             var thatType = typeof(T);
             var that = new T();
 
-            while (!reader.EndOfStream)
+            while (reader.Peek() != -1)
             {
                 line = reader.ReadLine().Trim();
                 if (string.IsNullOrEmpty(line) || line[0] == ';') continue;

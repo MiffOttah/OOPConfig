@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace MiffTheFox.OOPConfig
 {
@@ -12,7 +9,7 @@ namespace MiffTheFox.OOPConfig
     {
         static void Main(string[] args)
         {
-            string testFile = Path.Combine(Path.GetTempPath(), "OOPConfig.txt");
+            //string testFile = Path.Combine(Path.GetTempPath(), "OOPConfig.txt");
 
             var r = new Random();
 
@@ -34,9 +31,9 @@ namespace MiffTheFox.OOPConfig
             config1.SomeTimeSpan = new TimeSpan(r.Next(4), r.Next(60), r.Next(60));
             config1.SomeEnum = (MyEnum)r.Next(4);
 
-            config1.Save(testFile);
+            config1.Save();
 
-            var config2 = Configuration.Load<MyConfig>(testFile);
+            var config2 = Configuration.Load<MyConfig>();
             Debug.Assert(config2.SomeBool == config1.SomeBool);
             Debug.Assert(config2.SomeString == config1.SomeString);
             Debug.Assert(config2.SomeString2 == config1.SomeString2);

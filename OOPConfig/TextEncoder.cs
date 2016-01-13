@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Runtime.Serialization;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace MiffTheFox.OOPConfig
 {
@@ -14,6 +11,29 @@ namespace MiffTheFox.OOPConfig
     /// </summary>
     public static class TextEncoder
     {
+        /// <summary>
+        /// Prepares a string for insertion into a filename.
+        /// </summary>
+        public static string PrepareForFilename(string s)
+        {
+            const string ALLOWED_CHARS = "abcedefghijklmnopqrstuvwxyz0123456789";
+            var sb = new StringBuilder();
+
+            foreach (char c in s.ToLowerInvariant())
+            {
+                if (ALLOWED_CHARS.IndexOf(c) > -1)
+                {
+                    sb.Append(c);
+                }
+                else
+                {
+                    sb.Append('_');
+                }
+            }
+
+            return sb.ToString();
+        }
+
         public static void Encode(string s, TextWriter writer)
         {
             int i = 0;
