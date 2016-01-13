@@ -31,14 +31,10 @@ namespace MiffTheFox.OOPConfig
                         writer.Write("%20");
                     }
                 }
-                else if (c < ',') // takes care of % and other special chars, including control chars and newlines
+                else if ((c < ',' && c != '!') || c == '=' || c == '[' || c == ']' || c == ';') // takes care of % and other special chars, including control chars and newlines
                 {
                     writer.Write('%');
                     writer.Write(((int)c).ToString("x2", CultureInfo.InvariantCulture));
-                }
-                else if (c == '=' || c == '[' || c == ']' || c == ';') // more special chars
-                {
-                    writer.Write("%3d");
                 }
                 else if (char.IsControl(c) || char.IsSeparator(c) || char.IsSurrogate(c) || char.IsWhiteSpace(c)) // encode other misc special characters
                 {
@@ -117,13 +113,17 @@ namespace MiffTheFox.OOPConfig
             {
                 return ((bool)o) ? "true" : "false";
             }
+            else if (o is Enum)
+            {
+                return o.ToString();
+            }
             else if (o.GetType().GetCustomAttributes(false).Any(attr => attr is SerializableAttribute))
             {
                 var bf = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
                 using (var ms = new MemoryStream())
                 {
                     bf.Serialize(ms, o);
-                    return "object:" + Convert.ToBase64String(ms.ToArray());
+                    return o.GetType().FullName + "!" + Convert.ToBase64String(ms.ToArray());
                 }
             }
             else
@@ -190,21 +190,27 @@ namespace MiffTheFox.OOPConfig
                 {
                     return decimal.Parse(str, CultureInfo.InvariantCulture);
                 }
+                else if (destinationType.IsEnum)
+                {
+                    return Enum.Parse(destinationType, str, false);
+                }
 
                 else if (destinationType.GetCustomAttributes(false).Any(attr => attr is SerializableAttribute))
                 {
-                    if (str.StartsWith("object:"))
-                    {
-                        var bf = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
-                        byte[] data = Convert.FromBase64String(str.Substring(7));
-                        using (var ms = new MemoryStream(data))
-                        {
-                            return bf.Deserialize(ms);
-                        }
-                    }
-                    else
-                    {
+                    int ix = str.LastIndexOf('!');
+                    if (ix == -1)
                         throw new OOPConfigCannotDeseralizeException();
+
+                    string sourceType = str.Remove(ix);
+                    string dataString = str.Substring(ix + 1);
+
+                    if (sourceType != destinationType.FullName) throw new OOPConfigCannotDeseralizeException();
+
+                    var bf = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
+                    byte[] data = Convert.FromBase64String(dataString);
+                    using (var ms = new MemoryStream(data))
+                    {
+                        return bf.Deserialize(ms);
                     }
                 }
 
