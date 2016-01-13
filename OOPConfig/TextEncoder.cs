@@ -128,88 +128,101 @@ namespace MiffTheFox.OOPConfig
             }
             else
             {
-                return o.ToString();
+                throw new OOPConfigUnsupportedTypeException(o.GetType());
             }
         }
 
         public static object StringToObj(string str, Type destinationType)
         {
-            if (destinationType == typeof(string))
+            try
             {
-                return str;
-            }
-            else if (destinationType == typeof(bool))
-            {
-                return str.ToLowerInvariant() == "true";
-            }
-
-            // there's probably a better way to do this
-            else if (destinationType == typeof(int))
-            {
-                return int.Parse(str, CultureInfo.InvariantCulture);
-            }
-            else if (destinationType == typeof(uint))
-            {
-                return uint.Parse(str, CultureInfo.InvariantCulture);
-            }
-            else if (destinationType == typeof(long))
-            {
-                return long.Parse(str, CultureInfo.InvariantCulture);
-            }
-            else if (destinationType == typeof(ulong))
-            {
-                return ulong.Parse(str, CultureInfo.InvariantCulture);
-            }
-            else if (destinationType == typeof(short))
-            {
-                return short.Parse(str, CultureInfo.InvariantCulture);
-            }
-            else if (destinationType == typeof(ushort))
-            {
-                return ushort.Parse(str, CultureInfo.InvariantCulture);
-            }
-            else if (destinationType == typeof(byte))
-            {
-                return byte.Parse(str, CultureInfo.InvariantCulture);
-            }
-            else if (destinationType == typeof(sbyte))
-            {
-                return sbyte.Parse(str, CultureInfo.InvariantCulture);
-            }
-            else if (destinationType == typeof(float))
-            {
-                return float.Parse(str, CultureInfo.InvariantCulture);
-            }
-            else if (destinationType == typeof(double))
-            {
-                return double.Parse(str, CultureInfo.InvariantCulture);
-            }
-            else if (destinationType == typeof(decimal))
-            {
-                return decimal.Parse(str, CultureInfo.InvariantCulture);
-            }
-
-            else if (destinationType.GetCustomAttributes(false).Any(attr => attr is SerializableAttribute))
-            {
-                if (str.StartsWith("object:"))
+                if (destinationType == typeof(string))
                 {
-                    var bf = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
-                    byte[] data = Convert.FromBase64String(str.Substring(7));
-                    using (var ms = new MemoryStream(data))
+                    return str;
+                }
+                else if (destinationType == typeof(bool))
+                {
+                    return str.ToLowerInvariant() == "true";
+                }
+
+                // there's probably a better way to do this
+                else if (destinationType == typeof(int))
+                {
+                    return int.Parse(str, CultureInfo.InvariantCulture);
+                }
+                else if (destinationType == typeof(uint))
+                {
+                    return uint.Parse(str, CultureInfo.InvariantCulture);
+                }
+                else if (destinationType == typeof(long))
+                {
+                    return long.Parse(str, CultureInfo.InvariantCulture);
+                }
+                else if (destinationType == typeof(ulong))
+                {
+                    return ulong.Parse(str, CultureInfo.InvariantCulture);
+                }
+                else if (destinationType == typeof(short))
+                {
+                    return short.Parse(str, CultureInfo.InvariantCulture);
+                }
+                else if (destinationType == typeof(ushort))
+                {
+                    return ushort.Parse(str, CultureInfo.InvariantCulture);
+                }
+                else if (destinationType == typeof(byte))
+                {
+                    return byte.Parse(str, CultureInfo.InvariantCulture);
+                }
+                else if (destinationType == typeof(sbyte))
+                {
+                    return sbyte.Parse(str, CultureInfo.InvariantCulture);
+                }
+                else if (destinationType == typeof(float))
+                {
+                    return float.Parse(str, CultureInfo.InvariantCulture);
+                }
+                else if (destinationType == typeof(double))
+                {
+                    return double.Parse(str, CultureInfo.InvariantCulture);
+                }
+                else if (destinationType == typeof(decimal))
+                {
+                    return decimal.Parse(str, CultureInfo.InvariantCulture);
+                }
+
+                else if (destinationType.GetCustomAttributes(false).Any(attr => attr is SerializableAttribute))
+                {
+                    if (str.StartsWith("object:"))
                     {
-                        return bf.Deserialize(ms);
+                        var bf = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
+                        byte[] data = Convert.FromBase64String(str.Substring(7));
+                        using (var ms = new MemoryStream(data))
+                        {
+                            return bf.Deserialize(ms);
+                        }
+                    }
+                    else
+                    {
+                        throw new OOPConfigCannotDeseralizeException();
                     }
                 }
+
                 else
                 {
-                    throw new OOPConfigCannotDeseralizeException();
+                    // ignore any types that can't be deseralized
+                    throw new OOPConfigUnsupportedTypeException(destinationType);
                 }
             }
-
-            else
+            catch (OOPConfigUnsupportedTypeException)
             {
-                // ignore any types that can't be deseralized
-                return null;
+                // don't wrap any OOPConfigUnsupportedTypeException
+                throw;
+            }
+            catch (Exception ex)
+            {
+                // wrap all other exceptions
+                throw new OOPConfigParseExecption(ex);
             }
         }
     }
