@@ -30,6 +30,7 @@ namespace MiffTheFox.OOPConfig
             config1.SomeDTOffset = DateTimeOffset.Now;
             config1.SomeTimeSpan = new TimeSpan(r.Next(4), r.Next(60), r.Next(60));
             config1.SomeEnum = (MyEnum)r.Next(4);
+            config1.SomeFlags = MyFlagsEnum.Alpha | MyFlagsEnum.Gamma;
 
             config1.Save();
 
@@ -44,6 +45,7 @@ namespace MiffTheFox.OOPConfig
             Debug.Assert(config2.SomeDTOffset == config1.SomeDTOffset);
             Debug.Assert(config2.SomeTimeSpan == config1.SomeTimeSpan);
             Debug.Assert(config2.SomeEnum == config1.SomeEnum);
+            Debug.Assert(config2.SomeFlags == config1.SomeFlags);
         }
 
         class MyConfig : Configuration
@@ -60,6 +62,7 @@ namespace MiffTheFox.OOPConfig
             public TimeSpan SomeTimeSpan { get; set; }
 
             public MyEnum SomeEnum { get; set; }
+            public MyFlagsEnum SomeFlags { get; set; }
         }
 
         [Serializable]
@@ -74,6 +77,15 @@ namespace MiffTheFox.OOPConfig
             Diamonds,
             Spades,
             Clubs
+        }
+
+        [Flags]
+        enum MyFlagsEnum
+        {
+            None = 0,
+            Alpha = 1,
+            Beta = 2,
+            Gamma = 4
         }
     }
 }
